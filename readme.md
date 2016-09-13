@@ -1,4 +1,7 @@
 # ES-MVC - Boilerplate
+
+![Image of ES-MVC](http://photon.modernator.me/album/rico345100@gmail.com/blog/es-mvc/logo.png)
+
 ES-MVC is pure JavaScript MVC without any Frameworks or Libraries. It is based on ES2015 Modularization.
 
 Please remind that this is just prototype, so anything can be changes in future.
