@@ -368,3 +368,60 @@ const myController = new UIController({
 	}
 });
 ```
+
+Third option is events, which controls "view's events". Only you need is specify query selector and event name as key, and pass event handler as value of object.
+
+```javascript
+const myController = new UIController({
+	view: MyView,
+	events: {
+		'button click': function() {
+			console.log('Button clicked!');
+		}
+	}
+})
+```
+
+Event processing with controller is really simple. But do you remember that there is some kind of "event hook" on learning view? Let's go back to the view and figure out what is event hook.
+
+#### Event hook
+Event hook is not a big thing, just makes you create custom event to seperate your code into the controller.
+Let's make custom view to understand this:
+
+```javascript
+class MyView extends UIView {
+	show(cb) {
+		this.hook('show');
+		this.el.fadeIn(300, cb);
+	}
+}
+```
+
+You can see the 'this.hook' in MyView's show method. After you create hook over there, you can process that hook on the controller's events property.
+
+```javascript
+const myController = new UIController({
+	view: MyView,
+	events: {
+		'show': function() {
+			'Showing up view...'
+		}
+	}
+});
+```
+
+Hook is really comfortable feature, make your code to more maintanable. You can anykind of hook, and also you can pass the data with hook:
+
+```javascript
+this.hook('show', { hello: 'world' });
+```
+
+```javascript
+events: {
+	'show': function(obj) {
+		console.log(obj);	// Object { hello: 'world' }
+	}
+}
+```
+
+## Example - Creating simple todo list with ES-MVC

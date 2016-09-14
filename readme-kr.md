@@ -369,3 +369,60 @@ const myController = new UIController({
 	}
 });
 ```
+
+세 번째 옵션인 events는 뷰의 이벤트를 제어할 수 있게 해줍니다. 간단히 쿼리 셀렉터와 이벤트 이름을 키로, 이벤트 핸들러를 값으로 지정한 객체를 전달하세요.
+
+```javascript
+const myController = new UIController({
+	view: MyView,
+	events: {
+		'button click': function() {
+			console.log('Button clicked!');
+		}
+	}
+})
+```
+
+컨트롤러를 통한 이벤트 처리는 굉장히 쉽습니다. 그런데 혹시 뷰에 대해 공부할 때 이벤트 훅(Hook)에 대한 것을 나중에 알아보겠다고 한 것을 기억하시나요? 이제 이 것을 알아볼 떄가 온것 같군요.
+
+#### 이벤트 훅
+이벤트 훅은 그리 거창한건 아니고 커스텀 이벤트 같은것을 생성해서 코드를 컨트롤러에서 제어할 수 있게 해주는 장치입니다.
+커스텀 뷰를 만들어서 이해해보도록 하겠습니다.
+
+```javascript
+class MyView extends UIView {
+	show(cb) {
+		this.hook('show');
+		this.el.fadeIn(300, cb);
+	}
+}
+```
+
+MyView의 메서드인 show에서 this.hook이 보이실겁니다. 저렇게 훅을 설정해놓으면 컨트롤러의 events 속성에서 처리할 수 있습니다.
+
+```javascript
+const myController = new UIController({
+	view: MyView,
+	events: {
+		'show': function() {
+			'Showing up view...'
+		}
+	}
+});
+```
+
+훅은 굉장히 편한 기능이며 코드를 좀 더 유지보수하기 좋게 만들어줍니다. 여러분은 원하는 대로 훅을 마음껏 쓰실 수 있고, 데이터를 전달할 수도 있습니다.
+
+```javascript
+this.hook('show', { hello: 'world' });
+```
+
+```javascript
+events: {
+	'show': function(obj) {
+		console.log(obj);	// Object { hello: 'world' }
+	}
+}
+```
+
+## 예제 - 간단한 할일 목록을 ES-MVC로 만들기
