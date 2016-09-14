@@ -7,7 +7,7 @@ import $ from 'jquery';
 class UIController {
 	constructor(options = {}) {
 		if(!options.view) {
-			throw new Error('Photon: UIController must contain a view!');
+			throw new Error('ES-MVC: UIController must contain a view!');
 		}
 
 		if(typeof options.view === 'function') {
@@ -40,6 +40,14 @@ class UIController {
 					this.setEvent(this.view.el.find(elem), evName, options.events[key]);	
 				}
 			}
+		}
+
+		// if it has model, bind to view
+		if(this.model) {
+			this.view.bindModel(this.model);
+		}
+		else {
+			this.model = undefined;
 		}
 	}
 	setEvent(sel, name, fn) {

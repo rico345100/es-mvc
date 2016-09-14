@@ -8,7 +8,7 @@
 class UIModel {
 	constructor(options = {}) {
 		if(!options.schema) {
-			throw new Error('Photon: UIModel must contain a schema!');
+			throw new Error('ES-MVC: UIModel must contain a schema.');
 		}
 
 		this.data = {};
@@ -42,7 +42,7 @@ class UIModel {
 			}
 		}
 		else if(typeof this.schema[field] === 'undefined') {
-			throw new Error('Photon: Unknown field ' + field);
+			throw new Error('ES-MVC: Unknown field ' + field);
 		}
 		else {
 			this.data[field] = data;

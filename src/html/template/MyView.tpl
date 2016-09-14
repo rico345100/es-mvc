@@ -1,6 +1,5 @@
 <div id="my-view">
 	<h1>My View</h1>
 	<button id="my-view-update-model">Update Model</button>
-	<button id="my-view-get-model">Get Model</button>
-	<p id="my-view-text"></p>
+	<ul id="my-view-model-list"></ul>
 </div>

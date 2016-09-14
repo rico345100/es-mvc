@@ -26,26 +26,37 @@ When you start the ES-MVC app, it automatically detects file changes and inject 
 
 ## Basic Fundamentals
 ES-MVC is MVC framework, it means it has 3 fundamentals: Model, View, Controller.
-Each are ES6 Classes, so you can extend them or create new of them.
+Each are ES6 Classes, and called 'Basic components.' You can extend their functionalities just extends class. 
 
-Let's start with create your custom view named MyView class:
+### UIBase
+UIBase is basic class for all View type components. UIBase only has one property: this.el which represent single jQuery object.
+
+```javascript
+import UIBase from 'esmvc/UIBase';
+
+const myBase = new UIBase('#my-base');
+myBase.el.show();
+```
+
+### UIView
+UIView is extended UIBase class that has more functionalities. UIView also has 'Event hook', which tell you after learn about controlling events.
+
+```javascript
+import UIView from 'esmvc/UIView';
+
+const myView = new UIView('#my-view');
+myView.el.show();
+```
+
+Most of time, you will use this component to manipulate actual dom element. If you need more functions to control your view, you create your custom UIView and attach the methods.
 
 ```javascript
 import UIView from 'esmvc/UIView';
 
 class MyView extends UIView {
 	constructor(options) {
-		super('#myView', options);
+		super('#my-view', options);
 	}
-} 
-```
-
-You can add any method you like, but remember, view must have methods that only manipulate UI itself(means DOM).
-For instance:
-
-```javascript
-class MyView extends UIView {
-	constructor(...) { ... }
 	show(cb) {
 		this.el.fadeIn(300, cb);
 	}
@@ -53,246 +64,307 @@ class MyView extends UIView {
 		this.el.fadeOut(300, cb);
 	}
 }
+
+const myView = new MyView();
+myView.show();
+
 ```
 
-By default, view is not visible, so you need to make then visible. Most of time, your view needs show/hide methods.
-
-And let's make your controller. Like UIView, you can extend default controller, but most of time, you just uses UIController itself, without extending it.
+### UIDynamicView
+UIDynamicView is designed for controlling dynamic doms. This is useful when the dom elements are not a static.
 
 ```javascript
-import UIController from 'esmvc/UIController';
-import MyView from 'views/MyView';
+import UIDynamicView from 'esmvc/UIDynamicView';
 
-const myViewController = new UIController({
-	view: MyView,
-	myProperty: 1,
-	showView(cb) {
-		this.view.show(cb);
-	},
-	hideView(cb) {
-		this.view.hide(cb);
-	},
-	events: {
-		...
-	}
-});
+const myView1 = new UIDynamicView('#my-view');
+const myView2 = new UIDynamicView('#my-view');
+
+myView1.appendTo($('body'));
+myView2.appendTo($('body'));
 ```
 
-You can create controller methods or properties like that, the important thing is you must specified view(MyView), or controller throws exception.
-After you specified view, you can access it inside of controller's method with "this.view".
+
+### UITemplate
+UITemplate is similar to the UIDynamicView, but difference is UIDynamicView is requires actual DOM object, but it is not.
+In ES-MVC, you can require '\*.html', or '\*.tpl'.
 
 ```javascript
-showView(cb) {
-	this.view.show(cb);
-}
+const myTemplate = require('template/MyTemplate.tpl');
 ```
 
-You can specify events in "events" property like this:
-```javascript
-events: {
-	'#subForm submit': function(ev) {
-		ev.preventDefault();
-		alert('Submit!');
-	}
-}
-```
-
-There is really useful feature named 'event hook', which can create custom events in your view and catch from the controller. Let's get back to the MyView class:
+In the above example, variable myTemplate has text of 'template/MyTemplate.tpl'. And then you can pass it into UITemplate constructor.
 
 ```javascript
-class MyView extends UIView {
-	show(cb) {
-		this.hook('show');
-		this.fadeIn(300, cb);
-	}
-}
+const myView = new UITemplate(myTemplate);
 ```
 
-You can see 'this.hook' in show method. Only you need is specify name of the hook. Then you can catch it in UIController.
+Others are same as UIDynamicView. After initiated, UITemplate has same interface of UIDynamicView(Actually it just extended of UIDynamicView).
 
-```javascript
-const myViewController = new UIController({
-	events: {
-		'show': function() {
-			console.log('show hooked!');
-		}
-	}
-});
-```
 
-Like this, you can handle the hook in controller's events property.
-
-Finally, let's see the UIModel. UIModel represents single data collection. You can easily create the model with UIModel constructor.
+### UIModel
+Now, let's explore model. UIModel is simple data container of single bunch of data. You can just think it is just special kind of object for saving data.
+When creating UIModel, you must specify the schema, which easily expressed by JavaScrit array literal:
 
 ```javascript
 import UIModel from 'esmvc/UIModel';
 
 const myModel = new UIModel({
-	schema: ['id', 'name', 'age']
+	schema: ["id", "name", "age"]
 });
 
-export default myModel;
+myModel.set({
+	id: 1,
+	name: '.modernator',
+	age: 25
+});
+
+myModel.get('name');	// .modernator
 ```
 
-Simple huh? Only you need is create new UIModel instance, and specify schema as array. UIModel only has two methods: get and set which you can easily understand.
+Schema property can be a object literal, which calls "Advanced Schema.". Previous one is called "Simple Schema".
 
 ```javascript
-myModel.set('id', 0);
-myModel.set('name', '.modernator');
-myModel.set('age', 25);
-
-myModel.get('age');		// 25
-```
-
-Like UIView, you can also extend model into your custom model.
-
-```javascript
-class MyModel extends UIModel {
-	constructor(options) {
-		super(options);
+const myModel = new UIModel({
+	schema: {
+		id: {
+			default : 1
+		},
+		name: 1,
+		age: 1
 	}
-}
+});
+
+myModel.get('id');	// 1
 ```
 
-If you want to override basic model GET/SET, for instance, if you want to save them into remote DB, easily just override two methods: getModel and setModel.
+From now, UIModel only supports "default" option, but it will support more options later.
+
+Like other classes, you can create your own Model. You can override default get/set method by overriding getModel and setModel method.
 
 ```javascript
+import UIModel from 'esmvc/UIModel';
+
 class MyModel extends UIModel {
 	constructor(options) {
 		super(options);
 	}
 	getModel(field) {
-		console.log('Get model: ' + field);
-		return super.getModel(field);
+		console.log('Overrided get!');
+		return field;
 	}
 	setModel(field, data) {
-		console.log('Set model: ' + field + ' , ' + data);
-		return super.setModel(field, data);
+		console.log('Overeided set!');
+		field = data;
+		return;
 	}
 }
 
-const myModel = new MyModel({ schema: ["id"] });
-myModel.set('id', 1);			// Set model: id , 1
-myModel.get('id');				// Get model: id
 ```
 
-Not like view, controller does not require view. I'm heavily think about this, and decided to make this for easily manipulate multiple models to seperate them from controller.
-But if you want to control model in controller too, you can make your own controller, just extends UIController.
-
-Model is just schema, so there is no way to handle multiple model. If you want, you can use native JavaScript array to contain multiple models.
-This can be changes in future, like Backbone's collection.
+If you want to support async operation, you can create your asynchronous model easily:
 
 ```javascript
-let models = [
-	new UIModel(...),
-	new UIModel(...)
-];
-```
+import UIModel from 'esmvc/UIModel';
 
-Or using Object literal:
-```javascript
-let models = {
-	modelA: new UIModel(...),
-	modelB: new UIModel(...)
-};
-```
-
-UIModel supports two types of schema: Simple Schema and Advanced Schema.
-Simple schema is using array to specify required fields. Advanced schema is using object to specify each field with detail properties.
-```javascript
-const myModel = new UIModel({
-	schema: {
-		id: {
-			default :0
-		}
+class AsyncModel extends UIModel {
+	constructor(options) {
+		super(options);
 	}
-});
-```
-
-From now, Advanced Schema only provide single property: default. It sets default data into your field. 
-
-If you need async model like data fetching from remote server, there are two options.
-First is creating your custom UIModel class to extend UIModel.
-Second is use UIAsyncModel.
-As you can see in the name, this class was intended for supports asynchronous job. This special model class is only requires two more properties: get/set.
-
-I said eariler that you can override basic model data manipulation with override getModel and setModel method. In UIAsyncModel, only you need is set these two methods.
-
-```javascript
-
-import UIAsyncModel from 'esmvc/UIAsyncModel';
-
-const myAsyncModel = new UIAsyncModel({
-	schema: ["id"],
-	get: function(field) {
+	getModel(field) {
 		return new Promise((resolve, reject) => {
+			// send data to server...
 			setTimeout(() => {
-				resolve(this.data[field]);		// you can access model directly with this
-			}, 1000);
-		})
-	},
-	set: function(field, data) {
-		return new Promise((resolve, reject) => {
-			setTimeout(() => {
-				this.data[field] = data;
 				resolve();
 			}, 1000);
 		});
 	}
+	setModel(field, data) {
+		return new Promise((resolve, reject) => {
+			// send field and data via XHR to server...
+			setTimeut(() => {
+				resolve();
+			}, 1000);
+		});
+	}
+}
+
+const asyncModel = new AsyncModel({
+	schema: ["id", "name", "age"]
 });
 
-myAsyncModel.set('id', 100)
-.then(() => {
-	return myAsyncModel.get('id');
-})
-.then((id) => {
-	console.log('ID: ' + id);
+asyncModel.get()
+.then((data) => {
+	console.log(data);
+});
+
+```
+
+### UICollection
+UICollection is bunch of UIModels. That's why it has called collection. Similar to using UIModel, it requires schema option.
+
+```javascript
+import UICollection from 'esmvc/UICollection';
+
+const myCollection = new UICollection({
+	schema: ["id", "name", "age"]	// you can use both schema, simple and advanced.
 });
 ```
 
-The above example is promised model, you can use promise chain to handle async model jobs easily.
-Also UIAsyncModel supports add addtional paramters if you want. And you can access model it self with just using this.
+Difference between UIModel and UICollection, UICollection has array of instantiated UIModel. You can get this with get method.
 
 ```javascript
-import UIAsyncModel from 'esmvc/UIAsyncModel';
+let models = myCollection.get();
+```
 
-const myAsyncModel = new UIAsyncModel({
-	schema: ["id"],
-	get: function(field, cb) {
-		setTimeout(() => {
-			cb(field);
-		}, 1000);
-	},
-	set: function(field, data, cb) {
-		setTimeout(() => {
-			this.data[field] = data;
-			cb();
-		}, 1000);
+To create new model, you need to use add method.
+
+```javascript
+myCollection.add({ id: 1, name: '.modernator', age: 25 });
+```
+
+add method will returns index of created model, so if you can use it for accessing specific model with get method.
+
+```javascript
+let idx = myCollection.add({ ... });
+console.log(myCollection.get(idx));
+```
+
+to remove specific model, use remove method.
+
+```javascript
+myCollection.remove(0);
+```
+
+to remove all models, use clear method.
+
+```javascript
+myCollection.clear();
+```
+
+get method of collection will return UIModel type object, so if you actually obtain data, you need to use get method again.
+
+```javascript
+let model = myCollection.get(0);
+console.log(model.get('id'));
+```
+
+You can extend UICollection too:
+
+```javascript
+import UICollection from 'esmvc/UICollection';
+
+class MyCollection extends UICollection {
+	constructor(options) {
+		super(options);
+	}
+	...
+}
+
+```
+
+But if you want just using not plain UIModel, want to use extended your custom model, just specify model option when creating collection object.
+
+```javascript
+import UICollection from 'esmvc/UICollection';
+import MyModel from 'model/MyModel';
+
+const myCollection = new UICollection({
+	model: MyModel,
+	schema: { ... }
+});
+
+```
+
+
+### UIController
+Last thing of learning fundamentals of ES-MVC is UIController. UIController has power to control view and model, and mediate their actions.
+
+```javascript
+import UIController from 'esmvc/UIController';
+
+const myController = new UIController({ ... });
+```
+
+UIController has three parameters: view, model, events.
+view parameter must be set on create new controller object, otherwise, it throws exception. You can pass any type of view, and also you can just pass view class itself, not instantiated view object.
+
+```javascript
+import UIController from 'esmvc/UIController';
+import MyView from 'view/MyView';
+
+const myController = new UIController({
+	view: MyView,
+	...
+});
+
+// or
+const myController = new UIController({
+	view: new MyView(...),
+	...
+})
+```
+
+model parameter is optional, it just bind model to view automatically if it is exists. You can pass collection instead of model.
+
+```javascript
+import UIController from 'esmvc/UIController';
+import MyCollection from 'collection/MyCollection';
+import MyView from 'view/MyView';
+
+const myController = new UIController({
+	view: MyView,
+	model: new MyCollection({ ... })		// collection requires schema, so controller can't make own
+	...
+});
+
+```
+
+Then you can access model in view's method.
+
+```javascript
+class MyView extends UIView {
+	updateData() {
+		const models = this.model.get();	// in this case, this.model is UICollection object.
+		...
+	}
+}
+```
+
+Controller has unique ability to define custom properties and methods, not other classes, you can just write into parameter object.
+
+```javascript
+const myController = new UIController({
+	view: MyView,
+	model: new MyCollection({ ... }),
+	myProperty: 1,
+	myMethod: function() {
+		...
 	}
 });
+```
 
-myAsyncModel.set('id', 100, () => {
-	myAsyncModel.get('id', cb(id) => {
-		console.log('ID: ' + id);
-	});
-});
-``` 
-
-
-## Start Application
-Now you have your own ES-MVC App. You can simply type this command to execute your application:
-
-> gulp
-
-Then Gulp automatically build your application and will shown the live reloading page. If you don't want to live reload, just build your resources with
-> gulp build
-
-And use your own web server to serve it. Or if you only want to serve, not build resources, just
-> gulp serve
-
-There you go! Now you have your first ES-MVC Application. ES-MVC is very simple, light weight ES6 based MVC framework for modern web applications and you can easily extend functionalities or add external libraries.
-Also ES-MVC used jQuery for manipulating DOM, so you can use jquery with 
+You can access any properties or methods inside of controller with using this keyword.
 
 ```javascript
-import $ from 'jquery';
+const myController = new UIController({
+	...
+	myMethod: function() {
+		console.log('this.myProperty: ' + this.myProperty);
+	}
+});
+```
+
+Also you can access view or model(collection) too.
+
+```javascript
+const myController = new UIController({
+	view: MyView,
+	model: new MyCollection({ ... }),
+	updateView() {
+		this.view.updateData();
+	},
+	printModel() {
+		console.log(this.model.get());
+	}
+});
 ```

@@ -32,6 +32,9 @@ class UIDynamicView extends UIView {
 	detach() {
 		this.remove();
 	}
+	hasParent() {
+		return !!(this._parentEl);
+	}
 }
 
 export default UIDynamicView;

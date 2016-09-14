@@ -3,6 +3,7 @@ const gulp = require('gulp');
 const browserify = require('browserify');
 const babelify = require('babelify');
 const browserifyCss = require('browserify-css');
+const stringify = require('stringify');
 const source = require('vinyl-source-stream');
 const buffer = require('vinyl-buffer');
 const browserSync = require('browser-sync').create();
@@ -29,13 +30,19 @@ gulp.task('script', () => {
 			'./components/js', 
 			'/components/css', 
 			'./src/js', 
-			'./src/css'
+			'./src/css',
+			'./src/html'
 		]
 	})
 	.transform(babelify, { 
 		presets: ["es2015"],
 	})
 	.transform(browserifyCss, { global: true })
+	.transform(stringify, {
+		appliesTo: {
+			includeExtensions: ['.html', '.tpl']
+		}
+	})
 	.bundle()
 	.pipe(source('index.js'))
 	.pipe(buffer())

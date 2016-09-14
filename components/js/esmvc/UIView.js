@@ -10,6 +10,9 @@ class UIView extends UIBase {
 	hook(evName, args = {}) {
 		this.el.trigger(evName, args);
 	}
+	bindModel(model) {
+		this.model = model;
+	}
 }
 
 export default UIView;
