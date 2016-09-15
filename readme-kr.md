@@ -550,3 +550,415 @@ class YourController extends UIController {
 
 
 ## 예제 - 간단한 할일 목록을 ES-MVC로 만들기
+
+이제 첫 ES-MVC 앱을 만들어봅시다! 우리가 할것은 간단한 할일 목록입니다.
+
+![ES-MVC Todo App](http://photon.modernator.me:80/album/rico345100@gmail.com/blog/es-mvc/es-mvc-todo.png)
+
+먼저 HTML 파일을 만듭니다.
+
+/src/html/index.html
+```html
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>ES-MVC Todo</title>
+		<link rel="stylesheet" href="/css/app.css" />
+	</head>
+	<body>
+		<div id="todo-wrap">
+			<div id="todo">
+				<div id="todo-form"></div>
+				<div id="todo-list"></div>
+			</div>
+		</div>
+		<script src="/js/index.js"></script>
+	</body>
+</html>
+```
+
+중요한 부분은 div#todo-form과 #todo-list이며, 이들은 나중에 다른 템플릿으로 교체될 것 입니다.
+
+/src/html/template/todo-form.tpl
+```html
+<form id="todo-form">
+	<label>What you gonna do?</label>
+	<input type="text" />
+</div>
+```
+
+/src/html/template/todo-list.tpl
+```html
+<ul id="todo-list"></ul>
+```
+
+/src/html/template/todo-item.tpl
+```html
+<li>
+	<p></p>
+	<button class="edit">Edit</button>
+	<button class="delete">×</button>
+</li>
+```
+
+이 템플릿들을 이용해 HTML 코드를 분리하였습니다. 이들은 나중에 UITemplate으로 제어할 것 입니다.
+다음으로, /src/css/app.css 스타일을 만듭니다.
+
+```css
+* {
+	padding: 0;
+	margin: 0;
+	box-sizing: border-box;
+} 
+a {
+	text-decoration: underline;
+}
+img {
+	border: none;
+}
+
+#todo-wrap {
+	width: 100%;
+	height: 100%;
+}
+
+#todo {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 400px;
+	height: 500px;
+	margin-top: -250px;
+	margin-left: -200px;
+	background-color: #7f7d7b;
+	border-radius: 10px;
+	padding: 32px;
+}
+```
+
+HTML과 CSS가 준비되었으니, 자바스크립트를 사용할 차례입니다. 먼저 엔트리 파일을 작성합니다.
+/src/js/index.js
+
+```javascript
+import { instantiate } from 'esmvc';
+import TodoFormController from 'controller/TodoForm';
+import TodoListController from 'controller/TodoList';
+
+instantiate([TodoFormController, TodoListController]);
+```
+
+코드를 보면 알 수 있겠지만, TodoFormController와 TodoListController를 만들 것 입니다. 먼저 TodoForm를 먼저 만들어보겠습니다. 필요한 것은 컨트롤러, 뷰, 그리고 모델과 컬렉션입니다.
+/src/js/view/TodoForm.js
+
+```javascript
+import $ from 'jquery';
+import UITemplate from 'esmvc/UITemplate';
+import TodoFormTpl from 'template/todo-form.tpl';
+import 'view/TodoForm.css';
+
+class TodoForm extends UITemplate {
+	constructor(options) {
+		super(TodoFormTpl, options);
+
+		$('#todo-form').replaceWith(this.el);
+		this.el.show();
+	}
+}
+
+export default TodoForm;
+```
+
+/src/css/view/TodoForm.css
+
+```css
+#todo-form > * {
+	display: block;
+	width: 100%;
+	margin-bottom: 10px;
+}
+#todo-form label {
+	font-size: 24px;
+	color: #f8a279;
+	text-align: center;
+}
+#todo-form input {
+	border: none;
+	background-color: #fff;
+	border-radius: 5px;
+	padding: 8px 16px;
+	font-size: 20px;
+	color: #2b2b2b;
+}
+#todo-form input:focus {
+	outline: none;
+}
+```
+
+/src/js/model/Todo.js
+
+```javascript
+import UIModel from 'esmvc/UIModel';
+
+class TodoModel extends UIModel {
+	constructor(options = {}) {
+		options.schema = ["text"];
+		super(options);	
+	}
+}
+
+export default TodoModel;
+```
+
+/src/js/collection/Todo.js
+
+```javascript
+import UICollection from 'esmvc/UICollection';
+import TodoModel from 'model/Todo';
+
+class TodoCollection extends UICollection {
+	constructor(options = {}) {
+		options.model = TodoModel;
+		super(options);
+	}
+}
+
+export default TodoCollection;
+```
+
+컨트롤러를 만들기 전에 커뮤니케이터를 먼저 만들도록 합시다. 이 커뮤니케이터는 나중에 '새로운 할일이 추가됨'과 같은 정보를 TodoListController로 보낼 때 사용될 것 입니다.
+
+/src/js/communicator/Todo.js
+
+```javascript
+import UICommunicator from 'esmvc/UICommunicator';
+
+class TodoCommunicator extends UICommunicator {
+	constructor(options = {}) {
+		options.topic = 'todo';
+		super(options);
+	}
+}
+
+export default TodoCommunicator;
+```
+
+/src/js/controller/Todo.js
+
+```javascript
+import UIController from 'esmvc/UIController';
+import TodoCommunicator from 'communicator/Todo';
+import TodoFormView from 'view/TodoForm';
+
+class TodoFormController extends UIController {
+	constructor(options = {}) {
+		options.view = TodoFormView;
+		options.communicator = TodoCommunicator;
+		options.events = {
+			"submit": function(ev) {
+				ev.preventDefault();
+				
+				let text = this.view.el.find('input[type=text]');
+
+				this.communicator.speak('added', text.val());
+				text.val('');
+			}
+		};
+
+		super(options);
+	}
+}
+
+export default TodoFormController;
+```
+
+/src/css/view/TodoList.css
+
+```css
+#todo-list {
+	margin-top: 20px;
+	height: 340px;
+    overflow-y: auto;
+}
+	#todo-list > li {
+		position: relative;
+		display: block;
+		background-color: #ffa57a;
+		padding: 16px 24px;
+		border-radius: 5px;
+		margin-bottom: 20px;
+		min-height: 60px;
+	}
+		#todo-list > li > p {
+			font-size: 16px;
+			color: #2b2b2b;
+			width: 200px;
+		}
+		#todo-list > li > button {
+			position: absolute;
+			top: 50%;
+			margin-top: -16px;
+			background-color: #2b2b2b;
+			border: none;
+			color: #fff;
+			font-size: 12px;
+			padding: 8px;
+			cursor: pointer;
+			width: 40px;
+		}
+			#todo-list > li > button:hover {
+				background-color: #3e3e3e;
+			}
+		#todo-list > li > .edit {
+			right: 60px;
+		}
+		#todo-list > li > .delete {
+			right: 10px;
+		}
+```
+
+별로 복잡한건 없고, Form submit 이벤트가 발생하면 커뮤니케이터에게 데이터가 추가됨만을 알려줄 뿐 입니다.
+다음은 TodoList와 TodoItem이네요. 코드를 분리하기 위해서 TodoItem과 TodoList로 분리했습니다.
+
+/src/js/view/TodoList.js
+
+```javascript
+import $ from 'jquery';
+import UITemplate from 'esmvc/UITemplate';
+import TodoListTpl from 'template/todo-list.tpl';
+import 'view/TodoList.css';
+
+class TodoList extends UITemplate {
+	constructor(options) {
+		super(TodoListTpl, options);
+
+		$('#todo-list').replaceWith(this.el);
+		this.el.show();
+	}
+	reset() {
+		this.el.empty();
+	}
+}
+
+export default TodoList;
+```
+
+/src/js/view/TodoItem.js
+
+```javascript
+import UITemplate from 'esmvc/UITemplate';
+import TodoItemTpl from 'template/todo-item.tpl';
+
+class TodoItem extends UITemplate {
+	constructor(options) {
+		super(TodoItemTpl, options);
+	}
+	show() {
+		this.el.show();
+	}
+	update() {
+		this.el.find('p').text(this.model.get('text'));
+	}
+}
+
+export default TodoItem;
+```
+
+/src/js/controller/TodoList.js
+
+```javascript
+import UIController from 'esmvc/UIController';
+import TodoCollection from 'collection/Todo';
+import TodoCommunicator from 'communicator/Todo';
+import TodoListView from 'view/TodoList';
+import TodoItemController from 'controller/TodoItem';
+import 'view/TodoList.css';
+
+class TodoListController extends UIController {
+	constructor(options = {}) {
+		options.view = TodoListView;
+		options.communicator = TodoCommunicator;
+		options.model = TodoCollection;
+		options.listen = {
+			'added': function(text) {
+				this.model.add({ text: text });
+				this.update();
+			},
+			'updated': function(info) {
+				let { idx, text } = info;
+
+				this.model.set(idx, { text: text });
+				this.update();
+			},
+			'deleted': function(info) {
+				let { idx } = info;
+
+				this.model.remove(idx);
+				this.update();
+			}
+		};
+
+		super(options);
+	}
+	update() {
+		this.view.reset();
+		
+		this.model.get().map((md, idx) => {
+			const todoItemController = new TodoItemController();
+			todoItemController.setIdx(idx);
+			todoItemController.setParent(this.view.el);
+			todoItemController.bindModel(md);
+		});
+	}
+}
+
+export default TodoListController;
+```
+
+/src/js/controller/TodoItem.js
+
+```javascript
+import UIController from 'esmvc/UIController';
+import TodoCommunicator from 'communicator/Todo';
+import TodoItemView from 'view/TodoItem';
+
+class TodoItemController extends UIController {
+	constructor(options = {}) {
+		options.view = TodoItemView;
+		options.communicator = TodoCommunicator;
+		options.events = {
+			'model-binded': function() {
+				this.view.update();
+				this.view.appendTo(this.parent);
+				this.view.show();
+			},
+			'.edit click': function() {
+				let newText = prompt('Update', this.model.get('text'));
+				this.communicator.speak('updated', {
+					idx: this.idx,
+					text: newText
+				});
+			},
+			'.delete click': function() {
+				this.communicator.speak('deleted', {
+					idx: this.idx
+				});
+			}
+		}; 
+		super(options);
+	}
+	setIdx(idx) {
+		this.idx = idx;
+	}
+	setParent(el) {
+		this.parent = el;
+	}
+}
+
+export default TodoItemController;
+```
+
+이게 전부입니다. 중요한 부분은 TodoItemController인데, 이 컨트롤러는 앱 시작시 인스턴스화 되지 않고 필요한 경우에만 인스턴스화 됩니다(이는 컬렉션에 데이터가 있을때를 말합니다).
+예제를 실행하려면 아래 명령어를 치면 됩니다.
+
+> gulp build
+> gulp serve

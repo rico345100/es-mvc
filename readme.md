@@ -551,5 +551,416 @@ class YourController extends UIController {
 
 ## Example - Creating simple todo list with ES-MVC
 
-```javascript
+Let's make our first ES-MVC application! What we will make is simple todo list:
+
+![ES-MVC Todo App](http://photon.modernator.me:80/album/rico345100@gmail.com/blog/es-mvc/es-mvc-todo.png)
+
+First we do is creating html.
+
+/src/html/index.html
+```html
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>ES-MVC Todo</title>
+		<link rel="stylesheet" href="/css/app.css" />
+	</head>
+	<body>
+		<div id="todo-wrap">
+			<div id="todo">
+				<div id="todo-form"></div>
+				<div id="todo-list"></div>
+			</div>
+		</div>
+		<script src="/js/index.js"></script>
+	</body>
+</html>
 ```
+
+Important tag is div#todo-form and div#todo-list. I will replace them with this templates:
+
+/src/html/template/todo-form.tpl
+```html
+<form id="todo-form">
+	<label>What you gonna do?</label>
+	<input type="text" />
+</div>
+```
+
+/src/html/template/todo-list.tpl
+```html
+<ul id="todo-list"></ul>
+```
+
+/src/html/template/todo-item.tpl
+```html
+<li>
+	<p></p>
+	<button class="edit">Edit</button>
+	<button class="delete">×</button>
+</li>
+```
+
+I will use template to seperate HTML and use UITemplate to control them.
+
+Next, make /src/css/app.css
+
+```css
+* {
+	padding: 0;
+	margin: 0;
+	box-sizing: border-box;
+} 
+a {
+	text-decoration: underline;
+}
+img {
+	border: none;
+}
+
+#todo-wrap {
+	width: 100%;
+	height: 100%;
+}
+
+#todo {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 400px;
+	height: 500px;
+	margin-top: -250px;
+	margin-left: -200px;
+	background-color: #7f7d7b;
+	border-radius: 10px;
+	padding: 32px;
+}
+```
+
+HTML and CSS is now ready, so time to using JavaScript. Make entry JavaScript file:
+/src/js/index.js
+
+```javascript
+import { instantiate } from 'esmvc';
+import TodoFormController from 'controller/TodoForm';
+import TodoListController from 'controller/TodoList';
+
+instantiate([TodoFormController, TodoListController]);
+```
+
+As you can see, I will make two controllers: TodoFormController, TodoListController. Let's make TodoForm first. What we gonna needs are Controller, View and Model with Collection.
+/src/js/view/TodoForm.js
+
+```javascript
+import $ from 'jquery';
+import UITemplate from 'esmvc/UITemplate';
+import TodoFormTpl from 'template/todo-form.tpl';
+import 'view/TodoForm.css';
+
+class TodoForm extends UITemplate {
+	constructor(options) {
+		super(TodoFormTpl, options);
+
+		$('#todo-form').replaceWith(this.el);
+		this.el.show();
+	}
+}
+
+export default TodoForm;
+```
+
+/src/css/view/TodoForm.css
+
+```css
+#todo-form > * {
+	display: block;
+	width: 100%;
+	margin-bottom: 10px;
+}
+#todo-form label {
+	font-size: 24px;
+	color: #f8a279;
+	text-align: center;
+}
+#todo-form input {
+	border: none;
+	background-color: #fff;
+	border-radius: 5px;
+	padding: 8px 16px;
+	font-size: 20px;
+	color: #2b2b2b;
+}
+#todo-form input:focus {
+	outline: none;
+}
+```
+
+/src/js/model/Todo.js
+
+```javascript
+import UIModel from 'esmvc/UIModel';
+
+class TodoModel extends UIModel {
+	constructor(options = {}) {
+		options.schema = ["text"];
+		super(options);	
+	}
+}
+
+export default TodoModel;
+```
+
+/src/js/collection/Todo.js
+
+```javascript
+import UICollection from 'esmvc/UICollection';
+import TodoModel from 'model/Todo';
+
+class TodoCollection extends UICollection {
+	constructor(options = {}) {
+		options.model = TodoModel;
+		super(options);
+	}
+}
+
+export default TodoCollection;
+```
+
+Before make controller, let's make communicator first. I will use this for sending information like 'new todo created' to TodoListController.
+
+/src/js/communicator/Todo.js
+
+```javascript
+import UICommunicator from 'esmvc/UICommunicator';
+
+class TodoCommunicator extends UICommunicator {
+	constructor(options = {}) {
+		options.topic = 'todo';
+		super(options);
+	}
+}
+
+export default TodoCommunicator;
+```
+
+/src/js/controller/Todo.js
+
+```javascript
+import UIController from 'esmvc/UIController';
+import TodoCommunicator from 'communicator/Todo';
+import TodoFormView from 'view/TodoForm';
+
+class TodoFormController extends UIController {
+	constructor(options = {}) {
+		options.view = TodoFormView;
+		options.communicator = TodoCommunicator;
+		options.events = {
+			"submit": function(ev) {
+				ev.preventDefault();
+				
+				let text = this.view.el.find('input[type=text]');
+
+				this.communicator.speak('added', text.val());
+				text.val('');
+			}
+		};
+
+		super(options);
+	}
+}
+
+export default TodoFormController;
+```
+
+/src/css/view/TodoList.css
+
+```css
+#todo-list {
+	margin-top: 20px;
+	height: 340px;
+    overflow-y: auto;
+}
+	#todo-list > li {
+		position: relative;
+		display: block;
+		background-color: #ffa57a;
+		padding: 16px 24px;
+		border-radius: 5px;
+		margin-bottom: 20px;
+		min-height: 60px;
+	}
+		#todo-list > li > p {
+			font-size: 16px;
+			color: #2b2b2b;
+			width: 200px;
+		}
+		#todo-list > li > button {
+			position: absolute;
+			top: 50%;
+			margin-top: -16px;
+			background-color: #2b2b2b;
+			border: none;
+			color: #fff;
+			font-size: 12px;
+			padding: 8px;
+			cursor: pointer;
+			width: 40px;
+		}
+			#todo-list > li > button:hover {
+				background-color: #3e3e3e;
+			}
+		#todo-list > li > .edit {
+			right: 60px;
+		}
+		#todo-list > li > .delete {
+			right: 10px;
+		}
+```
+
+Not quite complicated, just checking Form submit event, and when it is emitted, tell the communicator that data has been added.
+
+Next is TodoList and TodoItem. To make split the code, I will divide TodoItem from TodoList.
+
+/src/js/view/TodoList.js
+
+```javascript
+import $ from 'jquery';
+import UITemplate from 'esmvc/UITemplate';
+import TodoListTpl from 'template/todo-list.tpl';
+import 'view/TodoList.css';
+
+class TodoList extends UITemplate {
+	constructor(options) {
+		super(TodoListTpl, options);
+
+		$('#todo-list').replaceWith(this.el);
+		this.el.show();
+	}
+	reset() {
+		this.el.empty();
+	}
+}
+
+export default TodoList;
+```
+
+/src/js/view/TodoItem.js
+
+```javascript
+import UITemplate from 'esmvc/UITemplate';
+import TodoItemTpl from 'template/todo-item.tpl';
+
+class TodoItem extends UITemplate {
+	constructor(options) {
+		super(TodoItemTpl, options);
+	}
+	show() {
+		this.el.show();
+	}
+	update() {
+		this.el.find('p').text(this.model.get('text'));
+	}
+}
+
+export default TodoItem;
+```
+
+/src/js/controller/TodoList.js
+
+```javascript
+import UIController from 'esmvc/UIController';
+import TodoCollection from 'collection/Todo';
+import TodoCommunicator from 'communicator/Todo';
+import TodoListView from 'view/TodoList';
+import TodoItemController from 'controller/TodoItem';
+import 'view/TodoList.css';
+
+class TodoListController extends UIController {
+	constructor(options = {}) {
+		options.view = TodoListView;
+		options.communicator = TodoCommunicator;
+		options.model = TodoCollection;
+		options.listen = {
+			'added': function(text) {
+				this.model.add({ text: text });
+				this.update();
+			},
+			'updated': function(info) {
+				let { idx, text } = info;
+
+				this.model.set(idx, { text: text });
+				this.update();
+			},
+			'deleted': function(info) {
+				let { idx } = info;
+
+				this.model.remove(idx);
+				this.update();
+			}
+		};
+
+		super(options);
+	}
+	update() {
+		this.view.reset();
+		
+		this.model.get().map((md, idx) => {
+			const todoItemController = new TodoItemController();
+			todoItemController.setIdx(idx);
+			todoItemController.setParent(this.view.el);
+			todoItemController.bindModel(md);
+		});
+	}
+}
+
+export default TodoListController;
+```
+
+/src/js/controller/TodoItem.js
+
+```javascript
+import UIController from 'esmvc/UIController';
+import TodoCommunicator from 'communicator/Todo';
+import TodoItemView from 'view/TodoItem';
+
+class TodoItemController extends UIController {
+	constructor(options = {}) {
+		options.view = TodoItemView;
+		options.communicator = TodoCommunicator;
+		options.events = {
+			'model-binded': function() {
+				this.view.update();
+				this.view.appendTo(this.parent);
+				this.view.show();
+			},
+			'.edit click': function() {
+				let newText = prompt('Update', this.model.get('text'));
+				this.communicator.speak('updated', {
+					idx: this.idx,
+					text: newText
+				});
+			},
+			'.delete click': function() {
+				this.communicator.speak('deleted', {
+					idx: this.idx
+				});
+			}
+		}; 
+		super(options);
+	}
+	setIdx(idx) {
+		this.idx = idx;
+	}
+	setParent(el) {
+		this.parent = el;
+	}
+}
+
+export default TodoItemController;
+```
+
+That's it. Important part is TodoItemController. This controller is not initiated when application starts, it only initiated when it need(means collection has data).
+You can run this example by
+
+> gulp build
+> gulp serve

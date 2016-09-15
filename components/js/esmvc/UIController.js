@@ -71,14 +71,7 @@ class UIController {
 
 		// if it has model, bind to view
 		if(options.model) {
-			if(typeof options.model === 'function') {
-				this.model = new options.model();
-			}
-			else {
-				this.model = options.model;
-			}
-			
-			this.view.bindModel(this.model);
+			this.bindModel(options.model);
 		}
 	}
 	setEvent(sel, name, fn) {
@@ -88,6 +81,16 @@ class UIController {
 	}
 	unsetEvent(sel, name, fn) {
 		sel.off(name, fn);
+	}
+	bindModel(model) {
+		if(typeof model === 'function') {
+			this.model = new model();
+		}
+		else {
+			this.model = model;
+		}
+		
+		this.view.bindModel(this.model);
 	}
 }
 

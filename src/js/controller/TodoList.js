@@ -2,7 +2,7 @@ import UIController from 'esmvc/UIController';
 import TodoCollection from 'collection/Todo';
 import TodoCommunicator from 'communicator/Todo';
 import TodoListView from 'view/TodoList';
-import TodoItemView from 'view/TodoItem';
+import TodoItemController from 'controller/TodoItem';
 import 'view/TodoList.css';
 
 class TodoListController extends UIController {
@@ -15,10 +15,16 @@ class TodoListController extends UIController {
 				this.model.add({ text: text });
 				this.update();
 			},
-			'updated': function() {
+			'updated': function(info) {
+				let { idx, text } = info;
+
+				this.model.set(idx, { text: text });
 				this.update();
 			},
-			'deleted': function() {
+			'deleted': function(info) {
+				let { idx } = info;
+
+				this.model.remove(idx);
 				this.update();
 			}
 		};
@@ -26,33 +32,13 @@ class TodoListController extends UIController {
 		super(options);
 	}
 	update() {
-		const todoListView = this.view.el;
-		const col = this.model;
-		const com = this.communicator;
 		this.view.reset();
 		
 		this.model.get().map((md, idx) => {
-			const todoItemController = new UIController({
-				view: TodoItemView,
-				model: md,
-				communicator: com,
-				events: {
-					'model-binded': function() {
-						this.view.update();
-						this.view.appendTo(todoListView);
-						this.view.show();
-					},
-					'.edit click': function() {
-						let newText = prompt('Update', md.get('text'));
-						col.set(idx, { text: newText });
-						this.communicator.speak('updated');
-					},
-					'.delete click': function() {
-						col.remove(idx);
-						this.communicator.speak('deleted');
-					}
-				}
-			});
+			const todoItemController = new TodoItemController();
+			todoItemController.setIdx(idx);
+			todoItemController.setParent(this.view.el);
+			todoItemController.bindModel(md);
 		});
 	}
 }
