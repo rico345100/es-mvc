@@ -99,7 +99,8 @@ const myTemplate = require('template/MyTemplate.tpl');
 const myView = new UITemplate(myTemplate);
 ```
 
-그 외에는 UITemplate은 UIDynamicView와 동일합니다. 이후 동작은 UIDynamicView와 동일한데 이는 UITemplate이 UIDynamicView를 상속받았기 때문입니다.
+그 외에는 UITemplate은 UIDynamicView와 동일합니다. 이후 동작은 UIDynamicView와 동일합니다.
+UIDynamicView와 UITemplate의 차이점은 다이나믹 View는 실제 DOM 객체를 캐쉬한 후 뷰를 만들때마다 복제하지만 UITemplate은 HTML 문자열을 실제 DOM 객체로 변환한다는 점 입니다.
 
 
 ### UIModel
@@ -424,5 +425,128 @@ events: {
 	}
 }
 ```
+
+### 컨트롤러를 class로 확장하기
+다른 컴포넌트들처럼, 컨트롤러 또한 class 키워드를 이용해 속성들을 정의할 수 있습니다.
+
+```javascript
+import UIController from 'esmvc/UIController';
+import MyView from 'view/MyView';
+import MyCollection from 'collection/MyCollection';
+
+class MyController extends UIController {
+	constructor(options = {}) {
+		options.view = MyView;
+		options.model = MyCollection;
+		options.events = { ... };
+
+		super(options);
+	}
+	customMethod() {
+		// you can access your view and model here.
+		this.view.update();
+		this.model.clear();
+	}
+}
+```
+
+하지만 이 방법을 선호하신다면 반드시 컨트롤러를 인스턴스화 시켜주셔야 합니다.
+
+```javascript
+// entry js
+import MyController from 'controller/MyController';
+new MyController();
+```
+
+만약 여러 개의 컨트롤러를 인스턴스화해야 한다면 instantiate 메서드를 대신 사용해보세요.
+
+```javascript
+import { instantiate } from 'esmvc';
+import MyController from 'controller/MyController';
+import YourController from 'controller/YourController';
+
+instantiate([MyController, YourController]);
+```
+
+
+## 고급 요소
+ES-MVC는 MVC 프레임워크이지만 가끔씩 컨트롤러에서 너무 많은 코드가 집중될 때가 있습니다. 이를 줄이기 위해 ES-MVC는 여러 기능들을 제공합니다.
+
+### UICommunicator
+UICommunicator는 컨트롤러들의 의존성을 줄이는 가장 효율적인 방법입니다. 여러분의 애플리케이션이 복잡해지면 여러분은 곧 컨트롤러에 너무 많은 코드가 몰리는걸 보실 수 있으실 겁니다.
+그리고 이 이유가 각각의 컨트롤러들의 기능을 사용하기 위해 이들을 서로 호출하기 때문이라는 것도 발견하게 될 것입니다.
+
+UICommunicator는 중재자로써, 컨트롤러간에 메시지를 듣고 다른 컨트롤러에게 전달해줍니다. 이는 여러분이 다른 컨트롤러의 기능들을 쓰기 위해 어떤 컨트롤러의 코드에 다른 컨트롤러를 불러오는 것을 더 이상 하지 않아도 된다는 뜻이죠.
+UICommunicator는 하나의 옵션, 토픽(Topic)만을 전달받습니다.
+
+```javascript
+import UICommunicator from 'esmvc/UICommunicator';
+
+class MyCommunicator extends UICommumicator {
+	constructor(options) {
+		options.topic = 'my';
+		super(options);
+	}
+}
+```
+
+UICommunicator는 단지 옵션이라는 것만을 이해하셔야 합니다(사용하는걸 강하게 권장하지만요). 이는 이 기능은 MVC랑 아무런 연관도 없다는 뜻 입니다.
+여러분이 오직 신경써야 할 것은 토픽과 리스너들 뿐입니다.
+
+여러분의 커뮤니케이터가 준비되었다면 커뮤니케이터를 활용하는 가장 쉬운 방법은 컨트롤러에 이를 할당하는 것 입니다.
+
+```javascript
+import UIController from 'esmvc/UIController';
+import MyCommunicator from 'communicator/MyCommunicator';
+
+
+class MyController extends UIController {
+	constructor(options = {}) {
+		...
+		options.communicator = MyCommunicator;
+		options.listen = {
+			'something-changed': function(e) {
+				console.log('something-changed', e);
+			}
+		};
+	}
+}
+```
+
+두 개의 옵션 communicator과 listen이 보이실 것 입니다. 후자는 커뮤니케이터가 전달하는 정보를 듣기 위한 것이기 때문에 여러분의 컨트롤러가 일방적으로 말하기(speak)만 하는 경우는 필요없습니다.
+listen 파라미터는 이벤트와 유사한데, 이 시스템이 이해가지 않으시면 그냥 구독/발행 구조라고 이해하셔도 됩니다.
+
+어쨌든, 커뮤니케이터가 있으니 이제 여러분은 말하고 싶은게 있으면 뭐든 커뮤니케이터한테 말하면 됩니다.
+
+```javascript
+class MyController extends UIController {
+	constructor(options = {}) {
+		...
+		options.communicator = MyCommunicator;
+		options.events = {
+			'button click': function() {
+				this.communicator.speak('button-pressed', 'hi');
+			}
+		}
+	}
+}
+```
+
+'button-pressed'를 듣고 있는 모든 청취자들은 hi라는 값을 전달받을 것 입니다.
+
+```javascript
+class YourController extends UIController {
+	constructor(options) {
+		...
+		options.listen = {
+			'button-pressed': function(e) {
+				console.log(e);		// hi
+			}
+		};
+		...
+	}
+}
+```
+
 
 ## 예제 - 간단한 할일 목록을 ES-MVC로 만들기

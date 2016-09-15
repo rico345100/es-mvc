@@ -9,17 +9,28 @@ class UIController {
 		if(!options.view) {
 			throw new Error('ES-MVC: UIController must contain a view!');
 		}
-
+		// bind view
 		if(typeof options.view === 'function') {
 			this.view = new options.view;
 		}
 		else {
 			this.view = options.view;
 		}
+		// bind communicator
+		if(typeof options.communicator === 'function') {
+			this.communicator = new options.communicator;
+		}
+		else {
+			this.communicator = options.communicator;
+		}
 		
 		// copy properties and methods to current object
 		for(var key in options) {
 			if(key === 'view') continue;
+			else if(key === 'model') continue;
+			else if(key === 'communicator') continue;
+			else if(key === 'listen') continue;
+			
 			this[key] = options[key];
 		}
 
@@ -42,12 +53,32 @@ class UIController {
 			}
 		}
 
-		// if it has model, bind to view
-		if(this.model) {
-			this.view.bindModel(this.model);
+		// bind communication listeners
+		if(options.listen) {
+			if(!this.communicator) {
+				throw new Error('ES-MVC: listen option is only available if it has communicator.');
+			}
+			
+			let ref = this;
+			for(var key in options.listen) {
+				((key) => {
+					this.communicator.listen(key, function() {
+						options.listen[key].apply(ref, arguments);
+					});
+				})(key);
+			}
 		}
-		else {
-			this.model = undefined;
+
+		// if it has model, bind to view
+		if(options.model) {
+			if(typeof options.model === 'function') {
+				this.model = new options.model();
+			}
+			else {
+				this.model = options.model;
+			}
+			
+			this.view.bindModel(this.model);
 		}
 	}
 	setEvent(sel, name, fn) {

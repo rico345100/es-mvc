@@ -98,7 +98,9 @@ In the above example, variable myTemplate has text of 'template/MyTemplate.tpl'.
 const myView = new UITemplate(myTemplate);
 ```
 
-Others are same as UIDynamicView. After initiated, UITemplate has same interface of UIDynamicView(Actually it just extended of UIDynamicView).
+Others are same as UIDynamicView. After initiated, UITemplate has same interface of UIDynamicView.
+Difference between UIDynamicView and UITemplate, former requires actual dom object and cache it. And when initiate new dynamic view, just clone the dom element.
+Latter one is requires HTML string, and convert this into actual dom.
 
 
 ### UIModel
@@ -424,4 +426,130 @@ events: {
 }
 ```
 
+### Class extended Controller
+Like other components, you can extend controller to initialize it's own actions.
+
+```javascript
+import UIController from 'esmvc/UIController';
+import MyView from 'view/MyView';
+import MyCollection from 'collection/MyCollection';
+
+class MyController extends UIController {
+	constructor(options = {}) {
+		options.view = MyView;
+		options.model = MyCollection;
+		options.events = { ... };
+
+		super(options);
+	}
+	customMethod() {
+		// you can access your view and model here.
+		this.view.update();
+		this.model.clear();
+	}
+}
+```
+
+But if you prefer this way, you must initiate controllers.
+
+```javascript
+// entry js
+import MyController from 'controller/MyController';
+new MyController();
+```
+
+If you have mutiple controller to instantiate, use instantiate method instead.
+
+```javascript
+import { instantiate } from 'esmvc';
+import MyController from 'controller/MyController';
+import YourController from 'controller/YourController';
+
+instantiate([MyController, YourController]);
+```
+
+
+## Adavanced fundamentals
+ES-MVC is MVC framework, but sometimes, your controller has too much code. For reduce this, we provide the way to seperate your codes.
+
+### UICommunicator
+UICommunicator is efficient way to seperate your controller dependencies. Getting your application complex, you will soon notice that controllers has too much code.
+And you will see that controllers are includes each other to make their execute their functions.
+
+UICommunicator is mediator, listen the controller's message and speak to the other controllers. This means that you don't need to include another controllers in some controller's code, only you need is communicate with UICommunicator.
+UICommunicator requires single option, topic.
+
+```javascript
+import UICommunicator from 'esmvc/UICommunicator';
+
+class MyCommunicator extends UICommumicator {
+	constructor(options) {
+		options.topic = 'my';
+		super(options);
+	}
+}
+```
+
+You must understand that UICommunicator is just optional(but heavily recommended), it means it does not matter what Model, Controller, View it is.
+Only you should care about is topic and listeners.
+
+After you have your own communicator, most easy way to use communicator is specify into controller.
+
+```javascript
+import UIController from 'esmvc/UIController';
+import MyCommunicator from 'communicator/MyCommunicator';
+
+
+class MyController extends UIController {
+	constructor(options = {}) {
+		...
+		options.communicator = MyCommunicator;
+		options.listen = {
+			'something-changed': function(e) {
+				console.log('something-changed', e);
+			}
+		};
+	}
+}
+```
+
+You can see the two options: communicator and listen. Latter one is for listening from communicator, so if your controller doesn't need to listen(means only have to speak), you don't need to specify it.
+listen parameter is really similar to events. If you don't understand this system, just think that it is just pub/sub system.
+
+Anyway, after you have communicator, you can speak to the communicator anytime you want.
+
+```javascript
+class MyController extends UIController {
+	constructor(options = {}) {
+		...
+		options.communicator = MyCommunicator;
+		options.events = {
+			'button click': function() {
+				this.communicator.speak('button-pressed', 'hi');
+			}
+		}
+	}
+}
+```
+
+Message will be sent all listeners who listens 'button-pressed' and receives 'hi'.
+
+```javascript
+class YourController extends UIController {
+	constructor(options) {
+		...
+		options.listen = {
+			'button-pressed': function(e) {
+				console.log(e);		// hi
+			}
+		};
+		...
+	}
+}
+```
+
+
 ## Example - Creating simple todo list with ES-MVC
+
+```javascript
+```

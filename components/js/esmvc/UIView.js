@@ -12,6 +12,7 @@ class UIView extends UIBase {
 	}
 	bindModel(model) {
 		this.model = model;
+		this.hook('model-binded');
 	}
 }
 

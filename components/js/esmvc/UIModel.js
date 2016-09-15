@@ -50,11 +50,25 @@ class UIModel {
 		
 		return this;
 	}
+	deleteModel(field) {
+		if(!field) {
+			return this.clear();
+		}
+		else if(typeof this.schema[field] === 'undefined') {
+			throw new Error('ES-MVC: Unknown field ' + field);
+		}
+
+		this.data[field] = undefined;
+		return this;
+	}
 	get(field) {
 		return this.getModel(field);
 	}
 	set(field, data) {
 		return this.setModel(field, data);
+	}
+	delete(field) {
+		return this.deleteModel(field);
 	}
 	clear() {
 		for(var key in this.schema) {

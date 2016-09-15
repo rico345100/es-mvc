@@ -1,0 +1,21 @@
+#todo-form > * {
+	display: block;
+	width: 100%;
+	margin-bottom: 10px;
+}
+#todo-form label {
+	font-size: 24px;
+	color: #f8a279;
+	text-align: center;
+}
+#todo-form input {
+	border: none;
+	background-color: #fff;
+	border-radius: 5px;
+	padding: 8px 16px;
+	font-size: 20px;
+	color: #2b2b2b;
+}
+#todo-form input:focus {
+	outline: none;
+}

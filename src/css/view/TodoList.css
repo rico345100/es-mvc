@@ -1,0 +1,40 @@
+#todo-list {
+	margin-top: 20px;
+	height: 340px;
+    overflow-y: auto;
+}
+	#todo-list > li {
+		position: relative;
+		display: block;
+		background-color: #ffa57a;
+		padding: 16px 24px;
+		border-radius: 5px;
+		margin-bottom: 20px;
+		min-height: 60px;
+	}
+		#todo-list > li > p {
+			font-size: 16px;
+			color: #2b2b2b;
+			width: 200px;
+		}
+		#todo-list > li > button {
+			position: absolute;
+			top: 50%;
+			margin-top: -16px;
+			background-color: #2b2b2b;
+			border: none;
+			color: #fff;
+			font-size: 12px;
+			padding: 8px;
+			cursor: pointer;
+			width: 40px;
+		}
+			#todo-list > li > button:hover {
+				background-color: #3e3e3e;
+			}
+		#todo-list > li > .edit {
+			right: 60px;
+		}
+		#todo-list > li > .delete {
+			right: 10px;
+		}
