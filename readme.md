@@ -962,5 +962,4 @@ export default TodoItemController;
 That's it. Important part is TodoItemController. This controller is not initiated when application starts, it only initiated when it need(means collection has data).
 You can run this example by
 
-> gulp build
-> gulp serve
+> gulp build;gulp serve

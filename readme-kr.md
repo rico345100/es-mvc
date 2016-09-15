@@ -960,5 +960,4 @@ export default TodoItemController;
 이게 전부입니다. 중요한 부분은 TodoItemController인데, 이 컨트롤러는 앱 시작시 인스턴스화 되지 않고 필요한 경우에만 인스턴스화 됩니다(이는 컬렉션에 데이터가 있을때를 말합니다).
 예제를 실행하려면 아래 명령어를 치면 됩니다.
 
-> gulp build
-> gulp serve
+> gulp build;gulp serve
