@@ -552,7 +552,7 @@ class YourController extends UIController {
 ES-MVC has component to save data, called 'UIModel', but sometimes you just need global data store. Like application configuration or user information, these kind of data is not suitable for using UIModel.
 UIRegistry is designed for that purpose, write data directly somewhere, and fetch it anywhere you need.
 You can think this is instantiated global model, but UIRegistry doesn't have schema and useful methods.
-It just have: set, get, clear, and that's it.
+It just have: set, get, remove, clear and that's it.
 
 To extend registry for your purpose, simply extend UIRegistry.
 

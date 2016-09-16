@@ -6,9 +6,24 @@ import $ from 'jquery';
 // void destroy(): Destroy controller and deallocate all resources
 class UIController {
 	constructor(options = {}) {
+		// validate
+		// requires view
 		if(!options.view) {
 			throw new Error('ES-MVC: UIController must contain a view!');
 		}
+		// if communicator and communicators are both exists, throw exception
+		else if(options.communicator && options.communicators) {
+			throw new Error('ES-MVC: UIController can not have communicator and communicators option both.'); 
+		}
+		// communicator option is not compatible with listens
+		else if(options.communicator && options.listens) {
+			throw new Error('ES-MVC: communicator can only has listen parameter, not listens.');
+		}
+		// opposite
+		else if(options.communicators && options.listen) {
+			throw new Error('ES-MVC: communicators can only have listens parameter, not listen.');
+		}
+
 		// bind view
 		if(typeof options.view === 'function') {
 			this.view = new options.view;
@@ -16,12 +31,38 @@ class UIController {
 		else {
 			this.view = options.view;
 		}
+
 		// bind communicator
-		if(typeof options.communicator === 'function') {
-			this.communicator = new options.communicator;
+		if(options.communicator) {
+			this.bindCommunicator(options.communicator);
 		}
-		else {
-			this.communicator = options.communicator;
+		
+		// bind communicators
+		if(options.communicators) {
+			if(typeof options.communicators === 'object') {
+				this.bindCommunicators(options.communicators);
+			}
+			else {
+				throw new Error('ES-MVC: communicators options must be an object.');
+			}
+		}
+
+		// bind communication listeners
+		if(options.listen) {
+			if(!this.communicator) {
+				throw new Error('ES-MVC: listen option is only available if it has communicator.');
+			}
+			
+			this.bindListen(options.listen);
+		}
+
+		// bind listens
+		if(options.listens) {
+			if(!this.communicators) {
+				throw new Error('ES-MVC: listens option is only available if it has communicators.');
+			}
+
+			this.bindListens(options.listens);
 		}
 		
 		// copy properties and methods to current object
@@ -29,7 +70,9 @@ class UIController {
 			if(key === 'view') continue;
 			else if(key === 'model') continue;
 			else if(key === 'communicator') continue;
+			else if(key === 'communicators') continue;
 			else if(key === 'listen') continue;
+			else if(key === 'listens') continue;
 			
 			this[key] = options[key];
 		}
@@ -50,22 +93,6 @@ class UIController {
 					
 					this.setEvent(this.view.el.find(elem), evName, options.events[key]);	
 				}
-			}
-		}
-
-		// bind communication listeners
-		if(options.listen) {
-			if(!this.communicator) {
-				throw new Error('ES-MVC: listen option is only available if it has communicator.');
-			}
-			
-			let ref = this;
-			for(var key in options.listen) {
-				((key) => {
-					this.communicator.listen(key, function() {
-						options.listen[key].apply(ref, arguments);
-					});
-				})(key);
 			}
 		}
 
@@ -91,6 +118,57 @@ class UIController {
 		}
 		
 		this.view.bindModel(this.model);
+	}
+	bindCommunicator(communicator) {
+		if(typeof communicator === 'undefined') {
+			return;
+		}
+		else if(typeof communicator === 'function') {
+			this.communicator = new communicator;
+		}
+		else {
+			this.communicator = communicator;
+		}
+	}
+	bindCommunicators(communicators) {
+		this.communicators = {};
+
+		for(let key in communicators) {
+			let communicator = communicators[key];
+
+			if(typeof communicator === 'function') {
+				this.communicators[key] = new communicator;
+			}
+			else {
+				this.communicators[key] = communicator;
+			}
+		}	
+	}
+	bindListen(listen) {
+		let ref = this;
+
+		for(var key in listen) {
+			((key) => {
+				this.communicator.listen(key, function() {
+					listen[key].apply(ref, arguments);
+				});
+			})(key);
+		}
+	}
+	bindListens(listens) {
+		let ref = this;
+
+		for(var communicator in listens) {
+			((listen) => {
+				for(var key in listen) {
+					((key) => {
+						this.communicators[communicator].listen(key, function() {
+							listen[key].apply(ref, arguments);
+						});
+					})(key);
+				}
+			})(listens[communicator]);
+		}
 	}
 }
 

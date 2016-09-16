@@ -50,7 +50,7 @@ class UIModel {
 		
 		return this;
 	}
-	deleteModel(field) {
+	removeModel(field) {
 		if(!field) {
 			return this.clear();
 		}
@@ -67,8 +67,8 @@ class UIModel {
 	set(field, data) {
 		return this.setModel(field, data);
 	}
-	delete(field) {
-		return this.deleteModel(field);
+	remove(field) {
+		return this.removeModel(field);
 	}
 	clear() {
 		for(var key in this.schema) {

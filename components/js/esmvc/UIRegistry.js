@@ -15,15 +15,32 @@ class UIRegistry {
 		if(!hasRegistry(key)) {
 			appRegistry[key] = {};
 		}
+
+		this._registry = appRegistry[key];
+	}
+	setData(key, value) {
+		this._registry[key] = value;
+	}
+	getData(key) {
+		return this._registry[key];
+	}
+	removeData(key) {
+		delete this._registry[key]
+	}
+	clearData() {
+		this._registry = {};
 	}
 	set(key, value) {
-		appRegistry[this.key][key] = value;
+		this.setData(key, value);
 	}
 	get(key) {
-		return appRegistry[this.key][key];
+		return this.getData(key);
 	}
-	clear(key) {
-		appRegistry[this.key][key] = {};
+	remove(key) {
+		this.removeData(key);
+	}
+	clearData() {
+		this.clearData();
 	}
 }
 

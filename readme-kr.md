@@ -553,7 +553,7 @@ class YourController extends UIController {
 ES-MVC는 데이터를 저장하기 위한 'UIModel'이라는 컴포넌트가 있습니다. 하지만 가끔씩 여러분은 전역 저장소가 필요할 것 입니다. 예를 들면 애플리케이션의 설정이나 사용자 정보같은 것들이 있겠죠. 이러한 데이터는 UIModel로 다루기에 적합하지 않습니다.
 UIRegistry가 바로 그러한 목적을 위해 설계되었고, 이는 어디에서나 데이터를 쓰고 어디에서나 불러올 수 있습니다.
 이를 인스턴스화된 전역 모델 정도로 생각하셔도 되지만 UIRegistry는 스키마도 없고 유용한 메서드도 없습니다.
-이는 단지 set, get, clear 메서드 밖에 없습니다.
+이는 단지 set, get, remove, clear 메서드 밖에 없습니다.
 
 여러분만의 레지스트리를 만들고 싶다면 UIRegistry를 확장해도 됩니다.
 
