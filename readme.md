@@ -548,6 +548,60 @@ class YourController extends UIController {
 }
 ```
 
+### UIRegistry
+ES-MVC has component to save data, called 'UIModel', but sometimes you just need global data store. Like application configuration or user information, these kind of data is not suitable for using UIModel.
+UIRegistry is designed for that purpose, write data directly somewhere, and fetch it anywhere you need.
+You can think this is instantiated global model, but UIRegistry doesn't have schema and useful methods.
+It just have: set, get, clear, and that's it.
+
+To extend registry for your purpose, simply extend UIRegistry.
+
+```javascript
+import UIRegistry from 'esmvc/UIRegistry';
+
+class MyRegistry extends UIRegistry {
+	constructor(options = {}) {
+		options.key = 'my';
+		super(options);
+	}
+}
+
+export default MyRegistry;
+```
+
+Then just include this registry whereever you need. Remember that you need to instantiate it first.
+
+```javascript
+import MyRegistry from 'registry/MyRegistry';
+
+const myRegistry = new MyRegistry();
+
+class MyController extends UIController {
+	constructor(options = {}) {
+		options.view = MyView;
+		...
+		super(options);
+	}
+	someMethod() {
+		myRegistry.set('some-data', 'helloworld');
+	}
+}
+```
+
+```javascript
+import MyRegistry from 'registry/MyRegistry';
+
+const myRegistry = new MyRegistry();
+
+class YourController extends UIController {
+	constructor(options = {}) { ... }
+	yourMethod() {
+		let data = myRegistry.get('some-data');
+		console.log('some-data: ' + data);
+	}
+}
+```
+
 
 ## Example - Creating simple todo list with ES-MVC
 
