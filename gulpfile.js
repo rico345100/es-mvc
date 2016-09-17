@@ -8,6 +8,7 @@ const source = require('vinyl-source-stream');
 const buffer = require('vinyl-buffer');
 const browserSync = require('browser-sync').create();
 const fileInclude = require('gulp-file-include');
+const rename = require('gulp-rename');
 
 const SRC = './src';
 const DIST = './dist';
@@ -46,6 +47,7 @@ gulp.task('script', () => {
 	.bundle()
 	.pipe(source('index.js'))
 	.pipe(buffer())
+	.pipe(rename('bundle.js'))
 	.pipe(gulp.dest(`${DIST}/js`));
 });
 
