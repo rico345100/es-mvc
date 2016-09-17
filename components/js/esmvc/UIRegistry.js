@@ -39,7 +39,7 @@ class UIRegistry {
 	remove(key) {
 		this.removeData(key);
 	}
-	clearData() {
+	clear() {
 		this.clearData();
 	}
 }

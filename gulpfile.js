@@ -29,7 +29,7 @@ gulp.task('script', () => {
 		paths: [
 			'./node_modules', 
 			'./components/js', 
-			'/components/css', 
+			'./components/css', 
 			'./src/js', 
 			'./src/css',
 			'./src/html'

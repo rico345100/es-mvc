@@ -12,6 +12,7 @@ class UIDynamicView extends UIView {
 			viewCache[el] = this.el;
 
 			// remove id attribute and from the dom tree
+			this.el.removeAttr('id');
 			this.el.remove();
 		}
 
