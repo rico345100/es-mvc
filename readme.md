@@ -83,6 +83,8 @@ myView1.appendTo($('body'));
 myView2.appendTo($('body'));
 ```
 
+DOM element for using UIDynamicView must use id. Other else, this won't work well. For most case, UITemplate is more suitable.
+
 
 ### UITemplate
 UITemplate is similar to the UIDynamicView, but difference is UIDynamicView is requires actual DOM object, but it is not.
@@ -548,6 +550,53 @@ class YourController extends UIController {
 }
 ```
 
+Controller can has multiple communicators. For this, must use communicators, not communicator. Both can't exists in single instance.
+
+```javascript
+import MyCommunicator from 'communicator/My';
+import YourCommunicator from 'communicator/Your';
+
+class MyController extends UIController {
+	constructor(options = {}) {
+		options.communicators = {
+			my: MyCommunicator,
+			your: YourCommunicator
+		};
+	}
+	someMethod() {
+		this.communicators.my.speak('move');
+		this.communicators.your.speak('stop');
+	}
+}
+```
+
+Also listen must be named 'listens' if you are using multiple communicators.
+
+```javascript
+import MyCommunicator from 'communicator/My';
+import YourCommunicator from 'communicator/Your';
+
+class MyController extends UIController {
+	constructor(options = {}) {
+		options.communicators = {
+			my: MyCommunicator,
+			your: YourCommunicator
+		};
+		options.listens = {
+			my: {
+				'move': function() {
+					console.log('I am moving');
+				},
+				'stop': function() {
+					console.log('I am stopping');
+				}
+			}
+		};
+	}
+}
+```
+
+
 ### UIRegistry
 ES-MVC has component to save data, called 'UIModel', but sometimes you just need global data store. Like application configuration or user information, these kind of data is not suitable for using UIModel.
 UIRegistry is designed for that purpose, write data directly somewhere, and fetch it anywhere you need.
@@ -600,6 +649,37 @@ class YourController extends UIController {
 		console.log('some-data: ' + data);
 	}
 }
+```
+
+Like model, you can override basic Registry operations. To do this, override 'setData', 'getData', 'removeData', 'clearData'.
+This is example for using UIModel as Registry to override basic operations.
+
+```javascript
+import UIRegistry from 'esmvc/UIRegistry';
+import UserModel from 'model/User';
+
+const userModel = new UserModel();
+
+class UserRegistry extends UIRegistry {
+	constructor(options = {}) {
+		options.key = 'user';
+		super(options);
+	}
+	setData(key, value) {
+		userModel.set(key, value);
+	}
+	getData(key) {
+		return userModel.get(key);
+	}
+	removeData(key) {
+		userModel.remove(key);
+	}
+	clearData() {
+		userModel.clear();
+	}
+}
+
+export default UserRegistry;
 ```
 
 

@@ -84,6 +84,8 @@ myView1.appendTo($('body'));
 myView2.appendTo($('body'));
 ```
 
+UIDynamicView를 위한 DOM은 반드시 id를 사용해야 합니다. 그렇지 않으면 제대로 동작하지 않을 것 입니다. 대부분의 상황에서는 UITemplate이 더 적합할 것 입니다.
+
 
 ### UITemplate
 UITemplate은 UIDynamicView와 유사하지만, UIDynamicView는 실제 DOM 객체를 요구하는 반면 UITemplate은 그렇지 않습니다.
@@ -548,6 +550,52 @@ class YourController extends UIController {
 }
 ```
 
+컨트롤러는 여러 커뮤니케이터를 가지고 있을 수 있습니다. 이 때는 반드시 communicators를 써야하며 communicator를 쓰면 안됩니다. 둘은 동시에 존재할 수 없습니다.
+
+```javascript
+import MyCommunicator from 'communicator/My';
+import YourCommunicator from 'communicator/Your';
+
+class MyController extends UIController {
+	constructor(options = {}) {
+		options.communicators = {
+			my: MyCommunicator,
+			your: YourCommunicator
+		};
+	}
+	someMethod() {
+		this.communicators.my.speak('move');
+		this.communicators.your.speak('stop');
+	}
+}
+```
+
+또한 listen은 여러 개의 커뮤니케이터를 쓸 경우 'listens'가 되어야 합니다.
+
+```javascript
+import MyCommunicator from 'communicator/My';
+import YourCommunicator from 'communicator/Your';
+
+class MyController extends UIController {
+	constructor(options = {}) {
+		options.communicators = {
+			my: MyCommunicator,
+			your: YourCommunicator
+		};
+		options.listens = {
+			my: {
+				'move': function() {
+					console.log('I am moving');
+				},
+				'stop': function() {
+					console.log('I am stopping');
+				}
+			}
+		};
+	}
+}
+```
+
 
 ### UIRegistry
 ES-MVC는 데이터를 저장하기 위한 'UIModel'이라는 컴포넌트가 있습니다. 하지만 가끔씩 여러분은 전역 저장소가 필요할 것 입니다. 예를 들면 애플리케이션의 설정이나 사용자 정보같은 것들이 있겠죠. 이러한 데이터는 UIModel로 다루기에 적합하지 않습니다.
@@ -601,6 +649,37 @@ class YourController extends UIController {
 		console.log('some-data: ' + data);
 	}
 }
+```
+
+모델처럼, 여러분은 레지스트리의 기본 동작을 오버라이드 할 수 있습니다. 'setData', 'getData', 'removeData', 'clearData'를 오버라이드하세요.
+아래 예제는 UIModel을 레지스트리로 이용하는 예제입니다.
+
+```javascript
+import UIRegistry from 'esmvc/UIRegistry';
+import UserModel from 'model/User';
+
+const userModel = new UserModel();
+
+class UserRegistry extends UIRegistry {
+	constructor(options = {}) {
+		options.key = 'user';
+		super(options);
+	}
+	setData(key, value) {
+		userModel.set(key, value);
+	}
+	getData(key) {
+		return userModel.get(key);
+	}
+	removeData(key) {
+		userModel.remove(key);
+	}
+	clearData() {
+		userModel.clear();
+	}
+}
+
+export default UserRegistry;
 ```
 
 
