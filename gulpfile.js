@@ -58,10 +58,10 @@ gulp.task('style', () => {
 });
 
 gulp.task('watch', () => {
-	gulp.watch(`${SRC}/html/**/*.html`, ['html']);
-	gulp.watch(`${SRC}/html/**/*.tpl`, ['html']);
-	gulp.watch(`${SRC}/js/**/*.js`, ['script']);
-	gulp.watch(`${SRC}/css/**/*.css`, ['style']);
+	gulp.watch(`./${SRC}/html/**/*.html`, ['html']);
+	gulp.watch(`./${SRC}/html/**/*.tpl`, ['html']);
+	gulp.watch(`./${SRC}/js/**/*.js`, ['script']);
+	gulp.watch(`./${SRC}/css/**/*.css`, ['style']);
 });
 
 gulp.task('serve', () => {

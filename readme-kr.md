@@ -203,6 +203,35 @@ asyncModel.get()
 
 ```
 
+기본적으로 스키마와 다른 데이터를 넣으려고 하면 오류가 던져집니다.
+만약 여러분의 모델을 좀 더 유연하게 하고싶다면, 즉 스키마에 없는 데이터도 추가하고 싶다면 strict 옵션을 false로 지정하세요.
+
+```javascript
+class FlexibleUserModel extends UIModel {
+	constructor(options = {}) {
+		options.strict = false;
+		options.schema = ["id", "name", "age"];
+
+		super(options);
+	}
+}
+
+export FlexibleUserModel;
+```
+
+이제 여러분은 존재하지 않는 필드를 '유연한' 모델에 넣을 수 있습니다.
+
+```javascript
+let userModel = new FlexibleUserModel();
+userModel.set({
+	id: 1,
+	name: '.modernator',
+	age: 25,
+	job: 'programmer'
+});
+```
+
+
 ### UICollection
 UICollection은 UIModel의 묶음입니다. 이게 바로 Collection이라고 이름 붙은 이유입니다. 모델처럼 UICollection도 Schema 옵션을 지정해야 합니다.
 
@@ -594,6 +623,14 @@ class MyController extends UIController {
 		};
 	}
 }
+```
+
+또한 여러 인자를 speak메서드로 전달할 수도 있습니다.
+
+```javascript
+...
+this.communicator.speak('move', 10, 10);
+...
 ```
 
 

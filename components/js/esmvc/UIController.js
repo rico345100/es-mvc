@@ -102,8 +102,10 @@ class UIController {
 		}
 	}
 	setEvent(sel, name, fn) {
-		sel.on(name, (ev) => {
-			return fn.call(this, ev);
+		let self = this;
+
+		sel.on(name, function(ev) {
+			return fn.apply(self, arguments);
 		});
 	}
 	unsetEvent(sel, name, fn) {

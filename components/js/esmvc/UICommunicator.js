@@ -32,7 +32,9 @@ class UICommunicator {
 		let listeners = topics[this.topic][key];
 		
 		for(var i = 0; i < listeners.length; i++) {
-			listeners[i](value);
+			let args = Array.prototype.slice.call(arguments);
+			args.splice(0, 1);	// remove key
+			listeners[i].apply(null, args);
 		}
 	}
 }

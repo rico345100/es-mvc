@@ -41,7 +41,7 @@ class UIModel {
 				this.set(key, field[key]);
 			}
 		}
-		else if(typeof this.schema[field] === 'undefined') {
+		else if(this.strict && typeof this.schema[field] === 'undefined') {
 			throw new Error('ES-MVC: Unknown field ' + field);
 		}
 		else {
@@ -54,7 +54,7 @@ class UIModel {
 		if(!field) {
 			return this.clear();
 		}
-		else if(typeof this.schema[field] === 'undefined') {
+		else if(this.strict && typeof this.schema[field] === 'undefined') {
 			throw new Error('ES-MVC: Unknown field ' + field);
 		}
 

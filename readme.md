@@ -203,6 +203,35 @@ asyncModel.get()
 
 ```
 
+Basically, if you try to add something to model that has different schema, it throws error.
+However, if you want to make your model mode flexible, means accept non-exists field, you can set the strict option to false.
+
+```javascript
+class FlexibleUserModel extends UIModel {
+	constructor(options = {}) {
+		options.strict = false;
+		options.schema = ["id", "name", "age"];
+
+		super(options);
+	}
+}
+
+export FlexibleUserModel;
+```
+
+Now you can add non-exist field into your 'flexible' model.
+
+```javascript
+let userModel = new FlexibleUserModel();
+userModel.set({
+	id: 1,
+	name: '.modernator',
+	age: 25,
+	job: 'programmer'
+});
+```
+
+
 ### UICollection
 UICollection is bunch of UIModels. That's why it has called collection. Similar to using UIModel, it requires schema option.
 
@@ -594,6 +623,14 @@ class MyController extends UIController {
 		};
 	}
 }
+```
+
+You can send multiple arguments via speak method.
+
+```javascript
+...
+this.communicator.speak('move', 10, 10);
+...
 ```
 
 
